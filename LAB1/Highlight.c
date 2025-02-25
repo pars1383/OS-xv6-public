@@ -1,6 +1,8 @@
 #include "types.h"
 #include "user.h"
 #include "fcntl.h"
+#include <stddef.h>  
+#include <string.h>  
 
 // List of keywords to highlight
 char *keywords[] = {

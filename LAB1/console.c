@@ -2,6 +2,8 @@
 // Input is from the keyboard or serial port.
 // Output is written to the screen and serial port.
 
+#include "Highlight.h"
+#ifndef types
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -14,7 +16,19 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
-#include "Highlight.h"
+/*
+#include <string.h> 
+#ifndef stddef.h
+#include <stddef.h> 
+
+*/
+
+//#endif
+
+/*
+#endif
+#endif
+*/
 
 static void consputc(int);
 
@@ -193,6 +207,8 @@ void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
+  char line[INPUT_BUF]; // Buffer to store the input line
+  int line_pos = 0;     // Current position in the line buffer
 
   acquire(&cons.lock);
   while((c = getc()) >= 0){
@@ -308,3 +324,7 @@ consoleinit(void)
   ioapicenable(IRQ_KBD, 0);
 }
 
+
+
+
+#endif
