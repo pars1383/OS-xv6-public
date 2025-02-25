@@ -14,6 +14,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+#include "Highlight.h"
 
 static void consputc(int);
 
@@ -219,6 +220,16 @@ consoleintr(int (*getc)(void))
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
         if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
+          line[line_pos] = '\0'; // Null-terminate the line
+                    if (line[0] == '!') // If the line starts with '!', highlight keywords
+                    {
+                        highlight_keywords(line + 1); // Skip the '!' character
+                    } else // Otherwise, print the line as-is
+                    {
+                        
+                        printf(1, "%s", line);
+                    }
+          line_pos = 0; // Reset the line buffer for the next input
           input.w = input.e;
           wakeup(&input.r);
         }
