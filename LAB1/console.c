@@ -2,8 +2,6 @@
 // Input is from the keyboard or serial port.
 // Output is written to the screen and serial port.
 
-#include "Highlight.h"
-#ifndef types
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -16,19 +14,6 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
-/*
-#include <string.h> 
-#ifndef stddef.h
-#include <stddef.h> 
-
-*/
-
-//#endif
-
-/*
-#endif
-#endif
-*/
 
 static void consputc(int);
 
@@ -207,8 +192,6 @@ void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
-  char line[INPUT_BUF]; // Buffer to store the input line
-  int line_pos = 0;     // Current position in the line buffer
 
   acquire(&cons.lock);
   while((c = getc()) >= 0){
@@ -236,16 +219,6 @@ consoleintr(int (*getc)(void))
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
         if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
-          line[line_pos] = '\0'; // Null-terminate the line
-                    if (line[0] == '!') // If the line starts with '!', highlight keywords
-                    {
-                        highlight_keywords(line + 1); // Skip the '!' character
-                    } else // Otherwise, print the line as-is
-                    {
-                        
-                        printf(1, "%s", line);
-                    }
-          line_pos = 0; // Reset the line buffer for the next input
           input.w = input.e;
           wakeup(&input.r);
         }
@@ -323,8 +296,3 @@ consoleinit(void)
 
   ioapicenable(IRQ_KBD, 0);
 }
-
-
-
-
-#endif

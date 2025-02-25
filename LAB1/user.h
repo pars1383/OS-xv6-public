@@ -3,7 +3,7 @@ struct rtcdate;
 
 // system calls
 int fork(void);
-void exit(void) __attribute__((noreturn));
+int exit(void) __attribute__((noreturn));
 int wait(void);
 int pipe(int*);
 int write(int, const void*, int);
@@ -21,18 +21,18 @@ int chdir(const char*);
 int dup(int);
 int getpid(void);
 char* sbrk(int);
-void sleep();
+int sleep(int);
 int uptime(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
-void *memmove(void*, const void*, uint);
+void *memmove(void*, const void*, int);
 char* strchr(const char*, char c);
 int strcmp(const char*, const char*);
 void printf(int, const char*, ...);
 char* gets(char*, int max);
-int strlen(const char*);
+uint strlen(const char*);
 void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
