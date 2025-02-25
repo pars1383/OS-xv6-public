@@ -24,7 +24,7 @@ main(void)
     printf(1, "Group #4\n");
     printf(1, "Parsa Alizadeh 810101572\n");
     printf(1, "Niloofar Mortazavi 220701096\n");
-    printf(1, "Mohammadreza Khalesi\n");
+    printf(1, "Mohammadreza Khalesi 810101580\n");
     pid = fork();
     if(pid < 0){
       printf(1, "init: fork failed\n");
