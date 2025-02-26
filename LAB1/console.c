@@ -24,36 +24,6 @@ static struct {
   int locking;
 } cons;
 
-struct History
-{
-  struct Input hist[10];
-  int index ;
-  int count ;
-  int last ;
-};
-struct History history = {.index = -1 , .count = 0, .last = -1};
-
-static int is_command_history(){
-  int j = 0;
-  char hist[7] = {'h', 'i', 's', 't', 'o', 'r', 'y'};
-  for(int i = input.r; i < input.e - 1; i++){
-    if(input.buf[i] != hist[j])
-      return 0;
-    j++;
-  }
-  return 1;
-}
-
-static void print_history(){
-
-  for(int i = 0; i < history.count; i++){
-    release(&cons.lock);
-    cprintf(&history.hist[i].buf[history.hist[i].r]);
-    acquire(&cons.lock);
-  }
-}
-
-
 static void
 printint(int xx, int base, int sign)
 {
