@@ -14,8 +14,15 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+#include "command_history.h" 
+
+#define INPUT_BUF 128
+#define MAX_COMMANDS 5
+#define MAX_COMMAND_LENGTH 100
 
 static void consputc(int);
+
+void init_command_history(struct CommandHistory *history);
 
 static int panicked = 0;
 
@@ -23,6 +30,16 @@ static struct {
   struct spinlock lock;
   int locking;
 } cons;
+
+struct CommandHistory command_history; // Declare an instance of the struct
+
+void init_command_history(struct CommandHistory *history) {
+    history->count = 0;
+    history->index = 0;
+    for (int i = 0; i < MAX_COMMANDS; i++) {
+        history->commands[i][0] = '\0'; // Initialize each command to an empty string
+    }
+}
 
 static void
 printint(int xx, int base, int sign)
@@ -178,7 +195,7 @@ consputc(int c)
   cgaputc(c);
 }
 
-#define INPUT_BUF 128
+
 struct {
   char buf[INPUT_BUF];
   uint r;  // Read index
@@ -192,8 +209,11 @@ void
 consoleintr(int (*getc)(void))
 {
   int c, doprocdump = 0;
+  static char input_buf[INPUT_BUF]; // Buffer for the current input line
+  static int input_pos = 0; // Current position in the input buffer
 
   acquire(&cons.lock);
+
   while((c = getc()) >= 0){
     switch(c){
     case C('P'):  // Process listing.
@@ -207,18 +227,32 @@ consoleintr(int (*getc)(void))
         consputc(BACKSPACE);
       }
       break;
-    case C('H'): case '\x7f':  // Backspace
-      if(input.e != input.w){
-        input.e--;
-        consputc(BACKSPACE);
-      }
-      break;
+    case C('H'):   // ctr+H
+      release(&cons.lock);
+      cprintf("%s\n", command_history.commands[4]);
+        
+
+      acquire(&cons.lock); 
+    break;
+      
+    
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
         c = (c == '\r') ? '\n' : c;
+        input_buf[input_pos++] = c;
         input.buf[input.e++ % INPUT_BUF] = c;
         consputc(c);
         if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
+          input_buf[input_pos] = '\0'; // Null-terminate the input line
+
+          // Store the command in history
+          if (input_pos > 1) { // Ignore empty lines
+            strncpy(command_history.commands[command_history.index], input_buf, MAX_COMMAND_LENGTH);
+            command_history.index = (command_history.index + 1) % MAX_COMMANDS;
+            if (command_history.count < MAX_COMMANDS) {
+                command_history.count++;
+            }
+        }
           input.w = input.e;
           wakeup(&input.r);
         }
@@ -226,7 +260,9 @@ consoleintr(int (*getc)(void))
       break;
     }
   }
+
   release(&cons.lock);
+  
   if(doprocdump) {
     procdump();  // now call procdump() wo. cons.lock held
   }
@@ -293,6 +329,9 @@ consoleinit(void)
   devsw[CONSOLE].write = consolewrite;
   devsw[CONSOLE].read = consoleread;
   cons.locking = 1;
+
+     // Initialize the command history
+     init_command_history(&command_history);
 
   ioapicenable(IRQ_KBD, 0);
 }
