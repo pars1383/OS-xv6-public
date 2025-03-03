@@ -49,6 +49,74 @@ struct backcmd {
   struct cmd *cmd;
 };
 
+char *keywords[] = {
+  "return", "while", "for", "if", "char", "int", "void"
+};
+
+// Function to check if a word is a keyword
+int is_keyword(char *word) {
+  int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
+  for (int i = 0; i < num_keywords; i++) {
+    if (strcmp(word, keywords[i]) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+// Function to highlight keywords in a line
+void highlight_keywords(char *line) {
+  char buffer[512]; // Buffer to store the modified line
+  int buffer_index = 0;
+  char word[64];    // Temporary storage for each word
+  int word_index = 0;
+  int skip = 0;     // Flag to skip text between # symbols
+
+  for (int i = 0; line[i] != '\0'; i++) {
+    if (line[i] == '#') {
+      skip = !skip; // Toggle skip flag
+      continue;     // Skip the # character itself
+    }
+
+    if (skip) {
+      continue; // Skip text between # symbols
+    }
+
+    if (line[i] == ' ' || line[i] == '\n' || line[i] == '\0') {
+      word[word_index] = '\0'; // End of word
+      if (is_keyword(word)) {
+        // Highlight keyword in blue (simulated)
+        buffer[buffer_index++] = '\033'; // ANSI escape code
+        buffer[buffer_index++] = '[';    // ANSI escape code
+        buffer[buffer_index++] = '3';    // ANSI color code for text
+        buffer[buffer_index++] = '4';    // ANSI color code for blue
+        buffer[buffer_index++] = 'm';    // ANSI escape code
+        for (int j = 0; word[j] != '\0'; j++) {
+          buffer[buffer_index++] = word[j];
+        }
+        buffer[buffer_index++] = '\033'; // ANSI escape code
+        buffer[buffer_index++] = '[';    // ANSI escape code
+        buffer[buffer_index++] = '0';    // ANSI reset code
+        buffer[buffer_index++] = 'm';    // ANSI escape code
+      } else {
+        // Copy the word as is
+        for (int j = 0; word[j] != '\0'; j++) {
+          buffer[buffer_index++] = word[j];
+        }
+      }
+      buffer[buffer_index++] = line[i]; // Copy the space or newline
+      word_index = 0; // Reset word index
+    } else {
+      word[word_index++] = line[i]; // Build the word
+    }
+  }
+
+  buffer[buffer_index] = '\0'; // Null-terminate the buffer
+  printf(1, "%s", buffer);     // Print the modified line
+}
+
+
+
 int fork1(void);  // Fork but panics on failure.
 void panic(char*);
 struct cmd *parsecmd(char*);
@@ -157,16 +225,20 @@ main(void)
 
   // Read and run input commands.
   while(getcmd(buf, sizeof(buf)) >= 0){
-    if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
+    if(buf[0] == '!') {
+      // Process the line and highlight keywords
+      highlight_keywords(buf + 1); // Skip the '!'
+    } else if(buf[0] == 'c' && buf[1] == 'd' && buf[2] == ' '){
       // Chdir must be called by the parent, not the child.
       buf[strlen(buf)-1] = 0;  // chop \n
       if(chdir(buf+3) < 0)
         printf(2, "cannot cd %s\n", buf+3);
       continue;
+    } else {
+      if(fork1() == 0)
+        runcmd(parsecmd(buf));
+      wait();
     }
-    if(fork1() == 0)
-      runcmd(parsecmd(buf));
-    wait();
   }
   exit();
 }
