@@ -14,31 +14,89 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
-#include "command_history.h" 
+//#include "command_history.h" 
 
 #define INPUT_BUF 128
-#define MAX_COMMANDS 5
+#define MAX_COMMANDS 10
 #define MAX_COMMAND_LENGTH 100
 
 static void consputc(int);
 
-void init_command_history(struct CommandHistory *history);
-
 static int panicked = 0;
+
+
+struct Input {
+  char buf[INPUT_BUF];
+  uint r;  // Read index
+  uint w;  // Write index
+  uint e;  // Edit index
+} input;
+
+
+struct CommandHistory {
+  struct Input commands[MAX_COMMANDS]; // Buffer to store commands
+  int count; // Number of commands stored
+  int index; // Index for circular buffer
+};
 
 static struct {
   struct spinlock lock;
   int locking;
 } cons;
 
-struct CommandHistory command_history; // Declare an instance of the struct
+struct CommandHistory command_history = {.index = -1 , .count = 0}; // Declare an instance of the struct
 
-void init_command_history(struct CommandHistory *history) {
-    history->count = 0;
-    history->index = 0;
-    for (int i = 0; i < MAX_COMMANDS; i++) {
-        history->commands[i][0] = '\0'; // Initialize each command to an empty string
+static void print_history(){
+
+
+    release(&cons.lock);
+    if(command_history.count < 5)
+      for (int i = 0; i < command_history.count; i++)
+      {
+        cprintf(&command_history.commands[i].buf[command_history.commands[i].r]);
+        //cprintf("if");
+      }
+    else
+      for (int i = command_history.count - 5; i < command_history.count; i++)
+      {
+        cprintf(&command_history.commands[i].buf[command_history.commands[i].r]);
+        //cprintf("else");
+      }
+    
+    
+    acquire(&cons.lock);
+
+  
+}
+
+
+static void shift_left_previous_histories(){
+  for (int i = 0; i < 9; i++) {
+    command_history.commands[i] =  command_history.commands[i+1]; 
+  }
+}
+
+static void try_match_history(){
+
+  for (int i = 0; i < command_history.count; i++)
+  {
+    int flag = 1;
+    int k = command_history.commands[i].r;
+    int j;
+    for(j = input.r ; j < input.e; j++, k++){
+
+      if(input.buf[j] != command_history.commands[i].buf[k]){
+        flag = 0;
+      }
     }
+    if(flag == 1){
+      for(; k < command_history.commands[i].e - 1; j++, k++){
+        input.buf[input.e++ % INPUT_BUF] = command_history.commands[i].buf[k];
+        consputc(command_history.commands[i].buf[k]);
+      }
+      return;
+    }
+  }
 }
 
 static void
@@ -196,13 +254,6 @@ consputc(int c)
 }
 
 
-struct {
-  char buf[INPUT_BUF];
-  uint r;  // Read index
-  uint w;  // Write index
-  uint e;  // Edit index
-} input;
-
 #define C(x)  ((x)-'@')  // Control-x
 
 void
@@ -228,13 +279,12 @@ consoleintr(int (*getc)(void))
       }
       break;
     case C('H'):   // ctr+H
-      release(&cons.lock);
-      cprintf("%s\n", command_history.commands[4]);
-        
-
-      acquire(&cons.lock); 
+        print_history();
     break;
       
+    case ('\t'):
+      try_match_history();
+    break;
     
     default:
       if(c != 0 && input.e-input.r < INPUT_BUF){
@@ -246,13 +296,16 @@ consoleintr(int (*getc)(void))
           input_buf[input_pos] = '\0'; // Null-terminate the input line
 
           // Store the command in history
-          if (input_pos > 1) { // Ignore empty lines
-            strncpy(command_history.commands[command_history.index], input_buf, MAX_COMMAND_LENGTH);
-            command_history.index = (command_history.index + 1) % MAX_COMMANDS;
-            if (command_history.count < MAX_COMMANDS) {
-                command_history.count++;
-            }
-        }
+          if (command_history.count == 10)
+             shift_left_previous_histories();
+
+          if(command_history.count < 10){
+             command_history.count ++;
+             command_history.index ++ ;
+           }
+         
+         
+          command_history.commands[command_history.index] = input;
           input.w = input.e;
           wakeup(&input.r);
         }
@@ -329,9 +382,6 @@ consoleinit(void)
   devsw[CONSOLE].write = consolewrite;
   devsw[CONSOLE].read = consoleread;
   cons.locking = 1;
-
-     // Initialize the command history
-     init_command_history(&command_history);
 
   ioapicenable(IRQ_KBD, 0);
 }
