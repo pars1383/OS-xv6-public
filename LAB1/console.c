@@ -87,7 +87,13 @@ static void shift_left_previous_histories(){
 
 static void try_match_history(){
 
-  for (int i = 0; i < command_history.count; i++)
+  if (input.buf[input.r] == '!')
+  {
+    return;
+  }
+  else
+  {
+    for (int i = command_history.count -1 ; i >= 0; i--)
   {
     int flag = 1;
     int k = command_history.commands[i].r;
@@ -106,6 +112,10 @@ static void try_match_history(){
       return;
     }
   }
+  }
+  
+
+  
 }
 
 static void
