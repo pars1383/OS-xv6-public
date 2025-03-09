@@ -20,15 +20,12 @@
 #define INPUT_BUF 128
 #define MAX_COMMANDS 10
 #define MAX_COMMAND_LENGTH 100
-#define INPUT_BUF 128
-#define MAX_COMMANDS 5
-#define MAX_COMMAND_LENGTH 100
-#define SELECT_BUF_SIZE 128
 
 
 static char select_buffer[SELECT_BUF_SIZE];  // Buffer for copied text
-static int selecting = 0;   // Selection mode flag 
-static int saved_index =0;// End index of selection
+static int selecting = 0;   // Selection mode flag
+static int select_start = -1; // Start index of selection
+static int select_end = -1;   // End index of selection
 
 static void consputc(int);
 
@@ -88,7 +85,13 @@ static void shift_left_previous_histories(){
 
 static void try_match_history(){
 
-  for (int i = 0; i < command_history.count; i++)
+  if (input.buf[input.r] == '!')
+  {
+    return;
+  }
+  else
+  {
+    for (int i = command_history.count -1 ; i >= 0; i--)
   {
     int flag = 1;
     int k = command_history.commands[i].r;
@@ -107,6 +110,10 @@ static void try_match_history(){
       return;
     }
   }
+  }
+  
+
+  
 }
 
 static void
@@ -293,28 +300,49 @@ consoleintr(int (*getc)(void))
     break;
 
     case C('C'):  // CTRL+C pressed
-    if (!selecting) {
-      selecting = 1;
-      saved_index =0;
-    } else {
-      // End selection and copy text
-      selecting = 0;        
-      
+      if (!selecting) {
+        // Start selection mode
+        selecting = 1;
+        select_start = input.e;  // Use current input position
+        
+      } else {
+        // End selection and copy text
+        selecting = 0;
+        select_end = input.e;
+        int len = select_end - select_start ;
+        if (-len > 0 && -len < SELECT_BUF_SIZE) {
+          memmove(select_buffer, input.buf + select_start, len);
+          select_buffer[len] = '\0';
+        }
+        select_start = select_end = -1;  // Reset selection
       }
     break;
 
-  case C('V'):  // CTRL+V pressed (paste)
-    for (int i= saved_index-1; i>=0; i--) {
-      
-        consputc(select_buffer[i]);
+    case C('V'):  // CTRL+V pressed (paste)
+      for (int i = 0; select_buffer[i] != '\0'; i++) {
+        if (input.e - input.w < INPUT_BUF) { // Ensure buffer limit
+          input.buf[input.e++ % INPUT_BUF] = select_buffer[i];
+          consputc(select_buffer[i]);
+        }
       }
-    
     break;
-    case 0xE4:
-    if (selecting){
-      select_buffer[saved_index++] = input.buf[(input.e-1) %INPUT_BUF];
+    case (LEFT_ARROW):  // Move cursor left
+    if (input.e != input.w) {
+      input.e--;
+      uartputc('\b');  // Move cursor visually
     }
-    input.e--;
+    break;
+
+    case(RIGHT_ARROW):  // Move cursor right
+      if (input.e < input.w) {
+        uartputc(input.buf[input.e % INPUT_BUF]);
+        cgaputc(input.buf[input.e % INPUT_BUF]);
+        input.e++;
+      }
+      break;
+      
+    case ('\t'):
+      try_match_history();
     break;
     
     default:
