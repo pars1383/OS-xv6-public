@@ -58,7 +58,6 @@ struct CommandHistory command_history = {.index = -1 , .count = 0}; // Declare a
 
 static void print_history(){
 
-
     release(&cons.lock);
     if(command_history.count < 5)
       for (int i = 0; i < command_history.count; i++)
@@ -72,11 +71,7 @@ static void print_history(){
         cprintf(&command_history.commands[i].buf[command_history.commands[i].r]);
         //cprintf("else");
       }
-    
-    
     acquire(&cons.lock);
-
-  
 }
 
 
