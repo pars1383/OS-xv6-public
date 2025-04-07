@@ -182,6 +182,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_app_name\
+	_test_palindrome\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

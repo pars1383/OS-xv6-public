@@ -1,3 +1,4 @@
+
 struct stat;
 struct rtcdate;
 
@@ -37,3 +38,4 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+int next_palindrome(int num);
