@@ -150,6 +150,9 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    if (curproc->logged_in && curproc->syscall_count < MAX_SYSCALLS) {
+      curproc->syscalls[curproc->syscall_count++] = num; // Log syscall number
+    }
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",
@@ -202,7 +205,7 @@ int sys_login_syscall(void) {
     return -1;
   }
   struct proc *curproc = myproc();
-  struct proc *parent = curproc->parent;
+  struct proc *parent = curproc->parent;  // Get the shell process
   cprintf("Debug: login_syscall, PID %d, requested UID %d, current UID %d, logged_in %d, parent PID %d\n", 
           curproc->pid, uid, curproc->uid, curproc->logged_in, parent->pid);
   if (uid <= 0 || uid >= next_uid) {
@@ -218,8 +221,8 @@ int sys_login_syscall(void) {
   for(int i = 0; i < MAX_USERS; i++) {
     if (logged_in_uids[i] == 0) {
       logged_in_uids[i] = uid;
-      parent->uid = uid;
-      parent->logged_in = 1;
+      parent->uid = uid;       // Set the parent's state (shell)
+      parent->logged_in = 1;   // Login the shell
       cprintf("UID %d logged in\n", uid);
       return 0;
     }
@@ -244,7 +247,7 @@ int sys_logout_syscall(void) {
   for(int i = 0; i < MAX_USERS; i++) {
     if (logged_in_uids[i] == uid) {
       logged_in_uids[i] = 0;
-      curproc->logged_in = 0;
+      curproc->logged_in = 0;  // Logout the current process (inherited from shell)
       cprintf("UID %d logged out\n", uid);
       return 0;
     }
@@ -271,3 +274,4 @@ int sys_get_logs_syscall(void) {
   }
   return 0;
 }
+

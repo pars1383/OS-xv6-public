@@ -1,3 +1,6 @@
+#define MAX_SYSCALLS 100
+#define MAX_USERS 32
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -49,6 +52,11 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  int uid;
+  int logged_in;
+  int syscalls[MAX_SYSCALLS];
+  int syscall_count;
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -56,3 +64,5 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+extern int logged_in_uids[MAX_USERS];

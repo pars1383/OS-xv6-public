@@ -11,6 +11,7 @@ struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
+int logged_in_uids[MAX_USERS];
 
 static struct proc *initproc;
 
@@ -24,6 +25,8 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  for(int i = 0; i < MAX_USERS; i++)
+    logged_in_uids[i] = 0;
 }
 
 // Must be called with interrupts disabled
@@ -88,6 +91,13 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  for(int i = 0; i < MAX_SYSCALLS; i++) {
+    p->syscalls[i] = 0;
+  }
+  p->uid = 0;
+  p->logged_in = 0;
+  p->syscall_count = 0;
 
   release(&ptable.lock);
 
@@ -184,7 +194,7 @@ fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
-  // Allocate process.
+
   if((np = allocproc()) == 0){
     return -1;
   }
@@ -199,6 +209,11 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+
+  // Copy login state
+   np->uid = curproc->uid;
+   np->logged_in = curproc->logged_in;
+  // syscall_count and syscalls remain process-specific, so no copy here
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
