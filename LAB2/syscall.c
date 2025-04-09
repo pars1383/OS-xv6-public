@@ -105,6 +105,11 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_next_palindrome(void);
 
+extern int sys_make_user_syscall(void);
+extern int sys_login_syscall(void);
+extern int sys_logout_syscall(void);
+extern int sys_get_logs_syscall(void);
+
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
 [SYS_exit]    sys_exit,
@@ -128,6 +133,13 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_next_palindrome] sys_next_palindrome,
+
+[SYS_next_palindrome] sys_next_palindrome,
+[SYS_next_palindrome] sys_next_palindrome,
+[SYS_make_user_syscall] sys_make_user_syscall,  
+[SYS_login_syscall]    sys_login_syscall,      
+[SYS_logout_syscall]   sys_logout_syscall,     
+[SYS_get_logs_syscall] sys_get_logs_syscall,   
 };
 
 void
@@ -167,3 +179,95 @@ int sys_next_palindrome(void) {
     return num;
 }
 
+
+
+static int next_uid = 1;
+
+int sys_make_user_syscall(void) {
+  struct proc *curproc = myproc();
+  cprintf("Debug: make_user_syscall, PID %d, current UID = %d\n", curproc->pid, curproc->uid);
+  if (curproc->uid != 0) {
+    cprintf("Process already has UID %d\n", curproc->uid);
+    return -1;
+  }
+  curproc->uid = next_uid++;
+  cprintf("%d\n", curproc->uid);
+  return curproc->uid;
+}
+
+int sys_login_syscall(void) {
+  int uid;
+  if (argint(0, &uid) < 0) {
+    cprintf("Invalid UID argument\n");
+    return -1;
+  }
+  struct proc *curproc = myproc();
+  struct proc *parent = curproc->parent;
+  cprintf("Debug: login_syscall, PID %d, requested UID %d, current UID %d, logged_in %d, parent PID %d\n", 
+          curproc->pid, uid, curproc->uid, curproc->logged_in, parent->pid);
+  if (uid <= 0 || uid >= next_uid) {
+    cprintf("Invalid UID %d\n", uid);
+    return -1;
+  }
+  for(int i = 0; i < MAX_USERS; i++) {
+    if (logged_in_uids[i] == uid) {
+      cprintf("UID %d already logged in\n", uid);
+      return -1;
+    }
+  }
+  for(int i = 0; i < MAX_USERS; i++) {
+    if (logged_in_uids[i] == 0) {
+      logged_in_uids[i] = uid;
+      parent->uid = uid;
+      parent->logged_in = 1;
+      cprintf("UID %d logged in\n", uid);
+      return 0;
+    }
+  }
+  cprintf("No space to log in UID %d\n", uid);
+  return -1;
+}
+
+int sys_logout_syscall(void) {
+  int uid;
+  if (argint(0, &uid) < 0) {
+    cprintf("Invalid UID argument\n");
+    return -1;
+  }
+  struct proc *curproc = myproc();
+  cprintf("Debug: logout_syscall, PID %d, requested UID %d, current UID %d, logged_in %d\n", 
+          curproc->pid, uid, curproc->uid, curproc->logged_in);
+  if (curproc->uid != uid || !curproc->logged_in) {
+    cprintf("UID %d not logged in or not assigned\n", uid);
+    return -1;
+  }
+  for(int i = 0; i < MAX_USERS; i++) {
+    if (logged_in_uids[i] == uid) {
+      logged_in_uids[i] = 0;
+      curproc->logged_in = 0;
+      cprintf("UID %d logged out\n", uid);
+      return 0;
+    }
+  }
+  cprintf("UID %d not found in logged-in list\n", uid);
+  return -1;
+}
+
+int sys_get_logs_syscall(void) {
+  struct proc *curproc = myproc();
+  cprintf("Debug: get_logs_syscall, PID %d, UID %d, logged_in %d, syscall_count %d\n", 
+          curproc->pid, curproc->uid, curproc->logged_in, curproc->syscall_count);
+  if (!curproc->logged_in) {
+    cprintf("Not logged in\n");
+    return -1;
+  }
+  cprintf("Logs for UID %d (PID %d):\n", curproc->uid, curproc->pid);
+  if (curproc->syscall_count == 0) {
+    cprintf("No system calls logged\n");
+  } else {
+    for (int i = 0; i < curproc->syscall_count; i++) {
+      cprintf("%d\n", curproc->syscalls[i]);
+    }
+  }
+  return 0;
+}

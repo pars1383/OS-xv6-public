@@ -183,6 +183,10 @@ UPROGS=\
 	_zombie\
 	_app_name\
 	_test_palindrome\
+	_make_user\
+  	_login\
+  	_logout\
+  	_get_logs\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
