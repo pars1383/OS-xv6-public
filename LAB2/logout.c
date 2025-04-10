@@ -1,4 +1,5 @@
 #include "types.h"
+#include "stat.h"
 #include "user.h"
 
 int main(int argc, char *argv[]) {
@@ -7,6 +8,9 @@ int main(int argc, char *argv[]) {
     exit();
   }
   int uid = atoi(argv[1]);
-  logout_syscall(uid);
+  int result = logout_syscall(uid);
+  if (result == 0) {
+    printf(1, "UID %d logged out\n", uid);
+  }
   exit();
 }

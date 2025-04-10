@@ -1,4 +1,4 @@
-
+#include "types.h"
 struct stat;
 struct rtcdate;
 
@@ -38,10 +38,9 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
-int next_palindrome(int num);
 
 int next_palindrome(int num);
-int make_user_syscall(void);
-int login_syscall(int uid);
 int logout_syscall(int uid);
 int get_logs_syscall(void);
+int make_user_syscall(int uid, char *password);
+int login_syscall(int uid, char *password);

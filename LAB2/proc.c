@@ -12,6 +12,9 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 int logged_in_uids[MAX_USERS];
+struct user_cred user_credentials[MAX_USERS] = {{0, ""}};
+int current_logged_in_uid = 0;
+struct user_syscall_logs user_syscall_logs[MAX_USERS] = {{0, {0}, 0}};
 
 static struct proc *initproc;
 
@@ -20,6 +23,27 @@ extern void forkret(void);
 extern void trapret(void);
 
 static void wakeup1(void *chan);
+
+
+void
+print_all_user_logs(void)
+{
+  int found = 0;
+  acquire(&ptable.lock);
+  for (int i = 0; i < MAX_USERS; i++) {
+    if (user_syscall_logs[i].uid != 0 && user_syscall_logs[i].syscall_count > 0) {
+      found = 1;
+      cprintf("UID %d:\n", user_syscall_logs[i].uid);
+      for (int j = 0; j < user_syscall_logs[i].syscall_count; j++) {
+        cprintf("%d\n", user_syscall_logs[i].syscalls[j]);
+      }
+    }
+  }
+  release(&ptable.lock);
+  if (!found) {
+    cprintf("No system calls logged for any user\n");
+  }
+}
 
 void
 pinit(void)

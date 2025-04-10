@@ -1,5 +1,7 @@
+
 #define MAX_SYSCALLS 100
 #define MAX_USERS 32
+#define PASSWORD_LEN 16
 
 // Per-CPU state
 struct cpu {
@@ -66,3 +68,26 @@ struct proc {
 //   expandable heap
 
 extern int logged_in_uids[MAX_USERS];
+
+
+struct user_cred {
+  int uid;
+  char password[PASSWORD_LEN];
+};
+extern struct user_cred user_credentials[MAX_USERS];
+
+
+
+struct user_syscall_logs {
+  int uid;
+  int syscalls[MAX_SYSCALLS];
+  int syscall_count;
+};
+
+extern int current_logged_in_uid;
+extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
+
+
+void print_all_user_logs(void);
+int make_user_syscall(int uid, char *password);
+

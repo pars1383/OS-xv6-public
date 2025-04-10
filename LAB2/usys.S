@@ -32,5 +32,6 @@ SYSCALL(uptime)
 SYSCALL(next_palindrome)
 SYSCALL(make_user_syscall)
 SYSCALL(login_syscall)
-SYSCALL(logout_syscall)
+SYSCALL(logout_syscall) 
 SYSCALL(get_logs_syscall)
+
