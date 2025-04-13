@@ -90,4 +90,5 @@ extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
 
 void print_all_user_logs(void);
 int make_user_syscall(int uid, char *password);
+int diff_syscall(const char* file1, const char* file2);
 

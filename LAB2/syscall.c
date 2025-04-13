@@ -87,6 +87,7 @@ extern int sys_make_user_syscall(void);
 extern int sys_login_syscall(void);
 extern int sys_logout_syscall(void);
 extern int sys_get_logs_syscall(void);
+extern int sys_diff_syscall(void);
 
 extern int current_logged_in_uid;
 extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
@@ -118,6 +119,7 @@ static int (*syscalls[])(void) = {
   [SYS_login_syscall]    sys_login_syscall,
   [SYS_logout_syscall]   sys_logout_syscall,
   [SYS_get_logs_syscall] sys_get_logs_syscall,
+  [SYS_diff_syscall] sys_diff_syscall,
 };
 
 void

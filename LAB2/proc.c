@@ -6,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "fcntl.h"
+#include "fs.h"
+#include "file.h"
 
 struct {
   struct spinlock lock;
@@ -570,4 +573,72 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int my_strcmp(const char *s1, const char *s2) {
+  while (*s1 && *s2 && *s1 == *s2) {
+    s1++;
+    s2++;
+  }
+  return *s1 - *s2;
+}
+
+int diff_syscall(const char* file1, const char* file2) {
+
+  struct inode *f1 = namei(file1);
+  struct inode *f2 = namei(file2);
+
+  if (f1 == 0 || f2 == 0)
+  {
+    return -1;
+  }
+
+  ilock(f1);
+  ilock(f2);
+
+  uint off1 = 0, off2 = 0;
+  char buf1[128], buf2[128];
+  int same = 1, line = 1;
+
+  while (1) {
+    int i = 0;
+    char ch;
+  
+    memset(buf1, 0, sizeof(buf1));
+    while (i < sizeof(buf1) - 1 && readi(f1, &ch, off1, 1) == 1) {
+      off1++;
+      if (ch == '\n' || ch == '\r') break;
+      buf1[i++] = ch;
+    }
+    buf1[i] = '\0';
+    int len1 = i;
+  
+    i = 0;
+    memset(buf2, 0, sizeof(buf2));
+    while (i < sizeof(buf2) - 1 && readi(f2, &ch, off2, 1) == 1) {
+      off2++;
+      if (ch == '\n' || ch == '\r') break;
+      buf2[i++] = ch;
+    }
+    buf2[i] = '\0';
+    int len2 = i;
+  
+    if (len1 == 0 && len2 == 0)
+      break;
+  
+    // cprintf("buf1 = [%s]\n", buf1);
+    // cprintf("buf2 = [%s]\n", buf2);
+  
+    if (my_strcmp(buf1, buf2) != 0) {
+      cprintf("line %d:\n  file1: %s\n  file2: %s\n", line, buf1, buf2);
+      same = 0;
+    }
+  
+    line++;
+  }
+    
+  iunlockput(f1);
+  iunlockput(f2);
+
+  return same ? 0 : -1;
 }

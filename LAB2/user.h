@@ -44,3 +44,4 @@ int logout_syscall(int uid);
 int get_logs_syscall(void);
 int make_user_syscall(int uid, char *password);
 int login_syscall(int uid, char *password);
+int diff_syscall(const char* text_file1, const char* text_file2);

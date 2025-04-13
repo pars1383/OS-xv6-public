@@ -6,6 +6,9 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "fcntl.h"
+#include "string.h"
+
 
 int
 sys_fork(void)
@@ -88,4 +91,18 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+
+int sys_diff_syscall(void)
+{
+
+  char *text_file1, *text_file2;
+
+  if (argstr(0, &text_file1) < 0 || argstr(1, &text_file2) < 0)
+
+    return -1;
+    
+  return diff_syscall(text_file1, text_file2);
+
 }
