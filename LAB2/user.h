@@ -44,3 +44,5 @@ int logout_syscall(int uid);
 int get_logs_syscall(void);
 int make_user_syscall(int uid, char *password);
 int login_syscall(int uid, char *password);
+int set_sleep (int ticks);
+int cmostime (struct rtcdate *r);

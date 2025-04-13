@@ -77,6 +77,26 @@ sys_sleep(void)
   return 0;
 }
 
+
+// int
+// sys_set_sleep(void){
+//   int ticks;
+//   if (argint(0,&ticks)<0)
+//     return -1;
+//   if (ticks<0){
+//     return -1;
+//   }
+//   int start_ticks = ticks0;
+  
+//   while (ticks0 - start_ticks<ticks){
+//     if (proc -> killed){
+//       return -1;
+//     }
+//     yield();
+//   }
+//   return 0;
+// }
+
 // return how many clock tick interrupts have occurred
 // since start.
 int

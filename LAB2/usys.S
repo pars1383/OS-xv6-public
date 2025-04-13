@@ -34,4 +34,5 @@ SYSCALL(make_user_syscall)
 SYSCALL(login_syscall)
 SYSCALL(logout_syscall) 
 SYSCALL(get_logs_syscall)
-
+SYSCALL(set_sleep)
+SYSCALL(cmostime)

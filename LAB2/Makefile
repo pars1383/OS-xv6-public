@@ -187,6 +187,7 @@ UPROGS=\
   	_login\
   	_logout\
   	_get_logs\
+	_testsleep\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

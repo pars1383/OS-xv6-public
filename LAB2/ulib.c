@@ -3,6 +3,7 @@
 #include "fcntl.h"
 #include "user.h"
 #include "x86.h"
+#include "syscall.h"
 
 char*
 strcpy(char *s, const char *t)
@@ -105,3 +106,7 @@ memmove(void *vdst, const void *vsrc, int n)
   return vdst;
 }
 
+// int
+// set_sleep(int n){
+//   return syscall(SYS_set_sleep,n);
+// }

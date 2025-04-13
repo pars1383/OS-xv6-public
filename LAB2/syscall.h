@@ -25,3 +25,5 @@
 #define SYS_login_syscall     24  
 #define SYS_logout_syscall    25  
 #define SYS_get_logs_syscall  26  
+#define SYS_set_sleep 27
+#define SYS_cmostime 28

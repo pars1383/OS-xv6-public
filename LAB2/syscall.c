@@ -6,6 +6,9 @@
 #include "proc.h"
 #include "x86.h"
 #include "syscall.h"
+#include "traps.h"
+#include "date.h"
+
 
 int
 fetchint(uint addr, int *ip)
@@ -87,6 +90,8 @@ extern int sys_make_user_syscall(void);
 extern int sys_login_syscall(void);
 extern int sys_logout_syscall(void);
 extern int sys_get_logs_syscall(void);
+extern int sys_set_sleep (void);
+extern int sys_cmostime(void);
 
 extern int current_logged_in_uid;
 extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
@@ -118,6 +123,9 @@ static int (*syscalls[])(void) = {
   [SYS_login_syscall]    sys_login_syscall,
   [SYS_logout_syscall]   sys_logout_syscall,
   [SYS_get_logs_syscall] sys_get_logs_syscall,
+  [SYS_set_sleep] sys_set_sleep,
+  [SYS_cmostime] sys_cmostime,
+
 };
 
 void
@@ -300,5 +308,37 @@ sys_get_logs_syscall(void)
     cprintf("Logs for all users (not logged in):\n");
     print_all_user_logs();
   }
+  return 0;
+}
+
+
+int
+sys_set_sleep(void){
+  int *n;
+  if (argint(0,&n)<0)
+    return -1;
+  if (&n<0){
+    return -1;
+  }
+
+  int start_time = ticks;
+  
+  while (ticks - start_time <n){
+    if (myproc() -> killed){
+      return -1;
+    }
+    yield();
+  }
+  return 0;
+
+}
+
+int 
+sys_cmostime(void){
+  struct rtcdate *r;
+  if (argptr (0,(void*)&r,sizeof(*r))<0)
+    return -1;
+
+  cmostime(r);
   return 0;
 }
