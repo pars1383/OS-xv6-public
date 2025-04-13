@@ -219,7 +219,7 @@ sys_make_user_syscall(void)
       user_credentials[i].uid = uid;
       safestrcpy(user_credentials[i].password, password, PASSWORD_LEN);
       curproc->uid = uid;
-      cprintf("Debug: make_user_syscall, UID %d created\n", uid);
+      //cprintf("Debug: make_user_syscall, UID %d created\n", uid);
       if (uid >= next_uid) next_uid = uid + 1;
       return uid;
     }
@@ -251,7 +251,7 @@ sys_login_syscall(void)
           curproc->uid = uid;
         }
         current_logged_in_uid = uid;
-        cprintf("Debug: login_syscall, UID %d logged in\n", uid);
+        //cprintf("Debug: login_syscall, UID %d logged in\n", uid);
         return 0;
       } else {
         cprintf("Authentication failed for UID %d\n", uid);
@@ -277,7 +277,7 @@ sys_logout_syscall(void)
     current_logged_in_uid = 0;
     curproc->logged_in = 0;
     curproc->uid = 0;
-    cprintf("Debug: logout_syscall, UID %d logged out\n", uid);
+    //cprintf("Debug: logout_syscall, UID %d logged out\n", uid);
     cprintf("UID %d logged out\n", uid);
     return 0;
   } else {

@@ -27,4 +27,4 @@
 #define SYS_get_logs_syscall  26  
 #define SYS_set_sleep 27
 #define SYS_cmostime 28
-#define SYS_diff_syscall 27
+#define SYS_diff_syscall 29

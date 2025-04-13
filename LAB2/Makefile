@@ -188,7 +188,7 @@ UPROGS=\
   	_logout\
   	_get_logs\
 	_testsleep\
-
+	_testdiff
 
 
 fs.img: mkfs README $(UPROGS) _a.txt _b.txt
