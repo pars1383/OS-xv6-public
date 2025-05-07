@@ -106,6 +106,7 @@ allocproc(void)
   struct proc *p;
   char *sp;
 
+
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -118,6 +119,11 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->class = 2;          // Default: Normal (Class 2)
+  p->level = 2;          // Default: Batch (Level 2)
+  p->deadline = 0;       // No deadline by default
+  p->wait_ticks = 0;     // Initialize wait time
+  p->quantum_ticks = 0;  // Initialize quantum ticks  
 
   for(int i = 0; i < MAX_SYSCALLS; i++) {
     p->syscalls[i] = 0;
@@ -175,6 +181,9 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+
+  p->class = 2;          // Normal
+  p->level = 1;          // Interactive (Level 1)
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -241,6 +250,16 @@ fork(void)
    np->uid = curproc->uid;
    np->logged_in = curproc->logged_in;
   // syscall_count and syscalls remain process-specific, so no copy here
+
+  // Ensure sh remains in Class 2, Level 1
+  np->class = curproc->class;
+  np->level = curproc->level;
+  if(my_strcmp(curproc->name, "init") == 0){
+    np->class = 2;
+    np->level = 1; // Force sh to be Interactive
+  }
+  np->wait_ticks = 0;
+  np->quantum_ticks = 0;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -367,35 +386,85 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+  int quantum = 3; // 30ms ≈ 3 ticks for Interactive
+
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+    // First, check for Class 1 (Real-Time) processes (handled in Class 1 part).
+    // For Class 2, prioritize Level 1 (Interactive) over Level 2 (Batch).
+    struct proc *selected_proc = 0;
+    int found_level1 = 0;
+
+    // Pass 1: Look for Level 1 (Interactive) processes (Class 2, Level 1)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      if(p->state != RUNNABLE || p->class != 2 || p->level != 1)
         continue;
+      selected_proc = p;
+      break; // Pick the first Level 1 process (RR)
+    }
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+    // Pass 2: If no Level 1 process, look for Level 2 (Batch) processes
+    if(!found_level1){
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE || p->class != 2 || p->level != 2)
+          continue;
+          // Aging: Promote to Level 1 if waiting too long
+          if(p->wait_ticks > 800){
+            p->level = 1;
+            p->wait_ticks = 0;
+            cprintf("Process %d (Batch) promoted to Interactive due to aging\n", p->pid);
+            continue;
+          }
+        selected_proc = p;
+        break; // Pick the first Level 2 process (FCFS)
+      }
+    }
 
-      swtch(&(c->scheduler), p->context);
+    // Pass 3: Update wait_ticks for aging and promote Level 2 processes if needed
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNABLE && p->class == 2 && p->level == 2){
+        p->wait_ticks++;
+        if(p->wait_ticks > 800){ // 800 ticks = 8 seconds
+          p->level = 1; // Promote to Interactive
+          p->wait_ticks = 0; // Reset wait_ticks
+          cprintf("Process %d (Batch) promoted to Interactive due to aging\n", p->pid);
+        }
+      }
+    }
+
+    // If a process was selected, run it
+    if(selected_proc){
+      c->proc = selected_proc;
+      switchuvm(selected_proc);
+      selected_proc->state = RUNNING;
+
+      // Reset quantum for Level 1 (Interactive) processes
+      if(selected_proc->level == 1){
+        selected_proc->quantum_ticks = 0; // Reset quantum counter
+      }
+
+      swtch(&(c->scheduler), selected_proc->context);
       switchkvm();
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
-    }
-    release(&ptable.lock);
+    
 
+    // For Level 1 (Interactive), yield after quantum
+    if(selected_proc->state == RUNNING && selected_proc->level == 1 && selected_proc->quantum_ticks >= quantum){
+      selected_proc->state = RUNNABLE;
+      cprintf("Process %d (Interactive) yielding after 30ms quantum\n", selected_proc->pid);
+    }
+
+    c->proc = 0;
+  }
+    release(&ptable.lock);
   }
 }
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -641,4 +710,67 @@ int diff_syscall(const char* file1, const char* file2) {
   iunlockput(f2);
 
   return same ? 0 : -1;
+}
+
+
+int
+set_deadline(int dl)
+{
+  struct proc *p = myproc();
+  acquire(&ptable.lock);
+  p->class = 1; // Real-Time
+  p->deadline = dl;
+  p->level = 0; // Not used for Class 1
+  p->wait_ticks = 0;
+  release(&ptable.lock);
+  return 0;
+}
+
+int
+change_queue(int pid, int q)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid){
+      if(p->class != 2){
+        release(&ptable.lock);
+        cprintf("Process %d is not in Class 2 (Normal)\n", pid);
+        return -1;
+      }
+      p->level = q; // 1 for Interactive, 2 for Batch
+      p->wait_ticks = 0; // Reset wait_ticks
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  cprintf("Process %d not found\n", pid);
+  return -1;
+}
+
+void
+print_info(void)
+{
+  struct proc *p;
+  acquire(&ptable.lock);
+  cprintf("PID\tName\tClass\tLevel\tState\tWait Ticks\n");
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    char *class_str = p->class == 1 ? "Real-Time" : "Normal";
+    char *level_str = p->class == 1 ? "N/A" : (p->level == 1 ? "Interactive" : "Batch");
+    char *state_str;
+    switch(p->state){
+      case EMBRYO:   state_str = "Embryo"; break;
+      case SLEEPING: state_str = "Sleeping"; break;
+      case RUNNABLE: state_str = "Runnable"; break;
+      case RUNNING:  state_str = "Running"; break;
+      case ZOMBIE:   state_str = "Zombie"; break;
+      default:       state_str = "Unused"; break;
+    }
+    cprintf("%d\t%s\t%s\t%s\t%s\t%d\n",
+            p->pid, p->name, class_str, level_str, state_str, p->wait_ticks);
+  }
+  release(&ptable.lock);
 }

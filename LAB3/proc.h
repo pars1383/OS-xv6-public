@@ -59,6 +59,12 @@ struct proc {
   int logged_in;
   int syscalls[MAX_SYSCALLS];
   int syscall_count;
+
+  int class;                   // 1 for Real-Time, 2 for Normal
+  int level;                   // For Class 2: 1 for Interactive, 2 for Batch
+  int deadline;                // For Class 1: Deadline for EDF scheduling
+  int wait_ticks;              // For aging: Tracks time spent in ready queue
+  int quantum_ticks;           // Tracks ticks used in current quantum (for Level 1)
 };
 
 // Process memory is laid out contiguously, low addresses first:
