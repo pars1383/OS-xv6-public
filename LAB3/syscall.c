@@ -93,6 +93,8 @@ extern int sys_get_logs_syscall(void);
 extern int sys_set_sleep (void);
 extern int sys_cmostime(void);
 extern int sys_diff_syscall(void);
+extern int sys_print_info(void);
+
 
 extern int current_logged_in_uid;
 extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
@@ -128,6 +130,9 @@ static int (*syscalls[])(void) = {
   [SYS_cmostime] sys_cmostime,
 
   [SYS_diff_syscall] sys_diff_syscall,
+  [SYS_print_info] sys_print_info,
+  
+  
 };
 
 void

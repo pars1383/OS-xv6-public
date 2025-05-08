@@ -37,4 +37,4 @@ SYSCALL(get_logs_syscall)
 SYSCALL(set_sleep)
 SYSCALL(cmostime)
 SYSCALL(diff_syscall)
-
+SYSCALL(print_info)

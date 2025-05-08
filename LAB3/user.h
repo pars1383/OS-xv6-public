@@ -47,3 +47,4 @@ int login_syscall(int uid, char *password);
 int set_sleep (int ticks);
 int cmostime (struct rtcdate *r);
 int diff_syscall(const char* text_file1, const char* text_file2);
+int print_info(void);

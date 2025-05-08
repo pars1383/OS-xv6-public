@@ -8,7 +8,7 @@
 #include "proc.h"
 #include "fcntl.h"
 #include "string.h"
-
+void print_info(void);
 
 int
 sys_fork(void)
@@ -125,4 +125,21 @@ int sys_diff_syscall(void)
     
   return diff_syscall(text_file1, text_file2);
 
+}
+
+
+int
+sys_change_queue(void)
+{
+  int pid, q;
+  if(argint(0, &pid) < 0 || argint(1, &q) < 0)
+    return -1;
+  return change_queue(pid, q);
+}
+
+int
+sys_print_info(void)
+{
+  print_info();
+  return 0;
 }

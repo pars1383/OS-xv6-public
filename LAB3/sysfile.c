@@ -416,6 +416,9 @@ sys_exec(void)
     if(fetchstr(uarg, &argv[i]) < 0)
       return -1;
   }
+
+  cprintf("Exec: setting name to %s\n", path); // Debug
+  safestrcpy(myproc()->name, path, sizeof(myproc()->name));
   return exec(path, argv);
 }
 
@@ -425,6 +428,10 @@ sys_pipe(void)
   int *fd;
   struct file *rf, *wf;
   int fd0, fd1;
+  char *name;
+  char *path, *argv[MAXARG];
+
+  
 
   if(argptr(0, (void*)&fd, 2*sizeof(fd[0])) < 0)
     return -1;
