@@ -59,7 +59,7 @@ trap(struct trapframe *tf)
     if(myproc() && myproc()->state == RUNNING && myproc()->class == 2 && myproc()->level == 1){
       myproc()->quantum_ticks++;
       if(myproc()->quantum_ticks >= 3){
-        cprintf("Process %d (Interactive) yielding after 30ms quantum\n", myproc()->pid);
+        //cprintf("Process %d (Interactive) yielding after 30ms quantum\n", myproc()->pid);
         yield();
       }
     }
@@ -73,8 +73,9 @@ trap(struct trapframe *tf)
 
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER){
+      myproc()->wait_ticks++;
     //cprintf("Process %d yielding on timer interrupt\n", myproc()->pid);
-    cprintf("Process %d waiting ticks %d\n", myproc()->pid , myproc()->wait_ticks);
+    //cprintf("Process %d waiting ticks %d\n", myproc()->pid , myproc()->wait_ticks);
     yield();
   }
     break;
