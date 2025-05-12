@@ -2,17 +2,46 @@
 #include "stat.h"
 #include "user.h"
 
-int
-main(int argc, char *argv[])
+void
+compute(void)
 {
-  int pid = getpid();
-  printf("Batch test process starting (PID %d)\n", pid);
+  for(int i = 0; i < 1000000; i++)
+    for(int j = 0; j < 1000; j++)
+      asm volatile("nop");
+}
+
+int
+main(void)
+{
+  printf(1, "Creating processes...\n");
+ 
   
-  for(int i = 0; i < 5; i++){
-    printf("Batch test (PID %d) iteration %d\n", pid, i);
-    for(int j = 0; j < 1000000; j++); // Simulate work
+  int pid1 = fork();
+  if(pid1 == 0){
+    compute();
+    exit();
   }
   
-  printf("Batch test process (PID %d) done\n", pid);
+  int pid2 = fork();
+  if(pid2 == 0){
+    compute();
+    exit();
+  
+  }
+  
+  print_info();
+  
+  if(change_queue(pid1, 1) < 0)
+    printf(1, "Failed to change level for PID %d\n", pid1);
+  
+  print_info();
+  
+  wait();
+  wait();
+  wait();
+
+  print_info();
+  
+  printf(1, "Test complete\n");
   exit();
 }
