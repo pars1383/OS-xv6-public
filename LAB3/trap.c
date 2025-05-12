@@ -64,25 +64,12 @@ trap(struct trapframe *tf)
       }
     }
 
-    // Update quantum_ticks for Level 1 (Interactive) processes
-    if(myproc() && myproc()->state == RUNNING && myproc()->class == 2 && myproc()->level == 1){
-      myproc()->quantum_ticks++;
-      if(myproc()->quantum_ticks >= 3){
-        cprintf("Process %d (Interactive) yielding after 30ms quantum\n", myproc()->pid);
-        yield();
-      }
-    }
+  
 
     lapiceoi();
 
-    if(myproc() && myproc()->state == RUNNING &&
-     myproc()->class == 2 && myproc()->level == 1){
-    myproc()->quantum_ticks++;
-    if(myproc()->quantum_ticks >= 3){
-      cprintf("Process %d (Interactive) yielding after 30ms quantum\n", myproc()->pid);
-      yield();
-    }
-  }
+    
+
 
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER){
@@ -123,9 +110,6 @@ trap(struct trapframe *tf)
             tf->err, cpuid(), tf->eip, rcr2());
     myproc()->killed = 1;
   }
-
-  if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
-    exit();
 
   // Original yield logic for timer interrupt (kept for compatibility)
   if(myproc() && myproc()->state == RUNNING &&

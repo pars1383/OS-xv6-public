@@ -65,6 +65,8 @@ struct proc {
   int deadline;                // For Class 1: Deadline for EDF scheduling
   int wait_ticks;              // For aging: Tracks time spent in ready queue
   int quantum_ticks;           // Tracks ticks used in current quantum (for Level 1)
+  int run_ticks;
+  int queue_entry_time;
 };
 
 // Process memory is laid out contiguously, low addresses first:
