@@ -23,6 +23,7 @@ struct user_syscall_logs user_syscall_logs[MAX_USERS] = {{0, {0}, 0}};
 static struct proc *initproc;
 
 int nextpid = 1;
+int first = 0;
 extern void forkret(void);
 extern void trapret(void);
 
@@ -135,6 +136,7 @@ found:
     p->level = 1; // Place in Class 2, Level 1 (RR)
   }
 
+
   for (int i = 0; i < MAX_SYSCALLS; i++)
   {
     p->syscalls[i] = 0;
@@ -242,6 +244,8 @@ int fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
+  int first = 0;
+
   if ((np = allocproc()) == 0)
   {
     return -1;
@@ -264,11 +268,25 @@ int fork(void)
   np->logged_in = curproc->logged_in;
   // syscall_count and syscalls remain process-specific, so no copy here
 
+
+  np->class = 2;
+  np->level = 2;
+  if (curproc->level ==1){
+    np->level = 1;
+  }
+  
+  if (curproc->class ==1){
+    np->class = 1;
+  }
   // Ensure sh remains in Class 2, Level 1
-  np->class = curproc->class;
-  np->level = curproc->level;
+  if (my_strcmp(curproc->name, "sh") == 0)
+  {
+    np->class = 2;
+    np->level = 1; // Force sh to be Interactive
+  }
   if (my_strcmp(curproc->name, "init") == 0)
   {
+
     np->class = 2;
     np->level = 1; // Force sh to be Interactive
   }
@@ -474,7 +492,7 @@ void scheduler(void)
     {
       if (p->state == RUNNABLE && p->class == 2 && p->level == 2)
       {
-        p->wait_ticks++;
+        //p->wait_ticks++;
         cprintf("waiting ticks %d \n", myproc()->wait_ticks);
         if (p->wait_ticks > 800)
         {                    // 800 ticks = 8 seconds
