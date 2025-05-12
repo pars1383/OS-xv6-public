@@ -94,6 +94,7 @@ extern int sys_set_sleep (void);
 extern int sys_cmostime(void);
 extern int sys_diff_syscall(void);
 extern int sys_print_info(void);
+extern int sys_change_queue(void);
 
 
 extern int current_logged_in_uid;
@@ -131,6 +132,7 @@ static int (*syscalls[])(void) = {
 
   [SYS_diff_syscall] sys_diff_syscall,
   [SYS_print_info] sys_print_info,
+  [SYS_change_queue] sys_change_queue,
   
   
 };

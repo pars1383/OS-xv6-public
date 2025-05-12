@@ -29,3 +29,4 @@
 #define SYS_cmostime 28
 #define SYS_diff_syscall 29
 #define SYS_print_info 30
+#define SYS_change_queue 31

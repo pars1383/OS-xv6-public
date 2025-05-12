@@ -157,6 +157,7 @@ int             fetchstr(uint, char**);
 void            syscall(void);
 int             sys_diff_syscall(void);
 int             sys_print_info(void); 
+int             sys_change_queue(void); 
 
 // timer.c
 void            timerinit(void);

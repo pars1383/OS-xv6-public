@@ -124,7 +124,7 @@ found:
   p->pid = nextpid++;
   p->class = 2;         // Default: Normal (Class 2)
   p->level = 2;         // Default: Batch (Level 2)
-  p->deadline = 0;      // No deadline by default
+  p->deadline = 1545155;      // No deadline by default
   p->wait_ticks = 0;    // Initialize wait time
   p->quantum_ticks = 0; // Initialize quantum ticks
   p->queue_entry_time = ticks;
@@ -273,6 +273,7 @@ int fork(void)
     np->level = 1; // Force sh to be Interactive
   }
   np->wait_ticks = 0;
+  np->queue_entry_time = ticks;
   np->quantum_ticks = 0;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -420,7 +421,6 @@ void scheduler(void)
     struct proc *selected_proc = 0;
     int found_level1 = 0;
 
-
     // Check Class 1: EDF (Real-time)
     int min_score = 2147483647; // Max int
     struct proc *best_p = 0;
@@ -454,6 +454,7 @@ void scheduler(void)
         if (p->state != RUNNABLE || p->class != 2 || p->level != 2)
           continue;
         // Aging: Promote to Level 1 if waiting too long
+
         if (p->wait_ticks > 800)
         {
           p->level = 1;
@@ -474,6 +475,7 @@ void scheduler(void)
       if (p->state == RUNNABLE && p->class == 2 && p->level == 2)
       {
         p->wait_ticks++;
+        cprintf("waiting ticks %d \n", myproc()->wait_ticks);
         if (p->wait_ticks > 800)
         {                    // 800 ticks = 8 seconds
           p->level = 1;      // Promote to Interactive
@@ -794,6 +796,7 @@ int change_queue(int pid, int q)
       }
       p->level = q;      // 1 for Interactive, 2 for Batch
       p->wait_ticks = 0; // Reset wait_ticks
+      p->queue_entry_time = ticks;
       release(&ptable.lock);
       return 0;
     }
@@ -807,37 +810,20 @@ void print_info(void)
 {
   struct proc *p;
   acquire(&ptable.lock);
-  cprintf("PID\tName\tClass\tLevel\tState\tWait Ticks\n");
-  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+  cprintf("PID\tName\tState\tClass\tLevel\tWaitTicks\tDeadline\tRunTicks\tQueueEntry\n");
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
   {
     if (p->state == UNUSED)
       continue;
-    char *class_str = p->class == 1 ? "Real-Time" : "Normal";
-    char *level_str = p->class == 1 ? "N/A" : (p->level == 1 ? "Interactive" : "Batch");
-    char *state_str;
-    switch (p->state)
-    {
-    case EMBRYO:
-      state_str = "Embryo";
-      break;
-    case SLEEPING:
-      state_str = "Sleeping";
-      break;
-    case RUNNABLE:
-      state_str = "Runnable";
-      break;
-    case RUNNING:
-      state_str = "Running";
-      break;
-    case ZOMBIE:
-      state_str = "Zombie";
-      break;
-    default:
-      state_str = "Unused";
-      break;
-    }
-    cprintf("%d\t%s\t%s\t%s\t%s\t%d\n",
-            p->pid, p->name, class_str, level_str, state_str, p->wait_ticks);
+    char *state = p->state == RUNNABLE ? "RUNNABLE" : p->state == RUNNING ? "RUNNING"
+                                                  : p->state == SLEEPING  ? "SLEEPING"
+                                                  : p->state == ZOMBIE    ? "ZOMBIE"
+                                                                          : "EMBRYO";
+    // char *algo = p->class == 1 ? "EDF" : p->level == 1 ? "RR"
+    //                                                    : "FCFS";
+    cprintf("%d\t%s\t%s\t%d\t%d\t%d\t%d\t\t%d\t\t%d\n",
+            p->pid, p->name, state, p->class, p->level,
+            p->wait_ticks, p->deadline, p->run_ticks, p->queue_entry_time);
   }
   release(&ptable.lock);
 }
