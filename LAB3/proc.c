@@ -242,6 +242,8 @@ int fork(void)
   struct proc *np;
   struct proc *curproc = myproc();
 
+  int first = 0;
+
   if ((np = allocproc()) == 0)
   {
     return -1;
@@ -264,11 +266,25 @@ int fork(void)
   np->logged_in = curproc->logged_in;
   // syscall_count and syscalls remain process-specific, so no copy here
 
+
+  np->class = 2;
+  np->level = 2;
+  if (curproc->level ==1){
+    np->level = 1;
+  }
+  
+  if (curproc->class ==1){
+    np->class = 1;
+  }
   // Ensure sh remains in Class 2, Level 1
-  np->class = curproc->class;
-  np->level = curproc->level;
+  if (my_strcmp(curproc->name, "sh") == 0)
+  {
+    np->class = 2;
+    np->level = 1; // Force sh to be Interactive
+  }
   if (my_strcmp(curproc->name, "init") == 0)
   {
+
     np->class = 2;
     np->level = 1; // Force sh to be Interactive
   }
@@ -296,6 +312,7 @@ int fork(void)
 
   return pid;
 }
+
 
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
