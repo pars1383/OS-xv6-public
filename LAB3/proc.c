@@ -475,7 +475,8 @@ void scheduler(void)
       if (p->state == RUNNABLE && p->class == 2 && p->level == 2)
       {
         p->wait_ticks++;
-        cprintf("waiting ticks %d \n", myproc()->wait_ticks);
+        print_info();
+        cprintf("waiting ticks %d \n", p->wait_ticks);
         if (p->wait_ticks > 800)
         {                    // 800 ticks = 8 seconds
           p->level = 1;      // Promote to Interactive
@@ -827,3 +828,6 @@ void print_info(void)
   }
   release(&ptable.lock);
 }
+
+
+

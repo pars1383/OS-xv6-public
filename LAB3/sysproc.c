@@ -144,3 +144,14 @@ sys_print_info(void)
   return 0;
 }
 
+int sys_create_realtime_process(void){
+  int d;
+  if(argint(0, &d) < 0 || d <= 0)
+    return -1;
+
+  int pid = fork();
+  if(pid == 0){
+    set_deadline(d);
+  }
+}
+

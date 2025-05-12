@@ -190,7 +190,7 @@ UPROGS=\
 	_testsleep\
 	_testdiff\
 	_batchtest\
-	_print_info
+	_print_info\
 
 
 fs.img: mkfs README $(UPROGS) _a.txt _b.txt

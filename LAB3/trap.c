@@ -71,7 +71,7 @@ trap(struct trapframe *tf)
     
 
 
-  if(myproc() && myproc()->state == RUNNING &&
+  if(myproc() && myproc()->state == RUNNABLE &&
      tf->trapno == T_IRQ0+IRQ_TIMER){
       myproc()->wait_ticks++;
     //cprintf("Process %d yielding on timer interrupt\n", myproc()->pid);
