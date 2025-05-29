@@ -23,6 +23,8 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int init_rw_lock(void);
+int get_rw_pattern(int pattern);
 
 // ulib.c
 int stat(const char*, struct stat*);

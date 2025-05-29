@@ -89,3 +89,47 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+extern struct rw_lock my_rw_lock;
+#include "rwlock.h"
+
+int sys_init_rw_lock(void) {
+  sem_init(&my_rw_lock.read_sem, 1);
+  sem_init(&my_rw_lock.write_sem, 1);
+  my_rw_lock.read_count = 0;
+  my_rw_lock.write_waiting = 0;
+  initlock(&my_rw_lock.lock, "rwlock");
+  return 0;
+}
+
+
+extern void reader(void);
+extern void writer(void);
+
+int sys_get_rw_pattern(void) {
+  int pattern;
+  if (argint(0, &pattern) < 0)
+    return -1;
+
+  // پیدا کردن تعداد بیت‌های معنادار
+  int highest_bit = -1;
+  for (int i = 31; i >= 0; i--) {
+    if ((pattern >> i) & 1) {
+      highest_bit = i;
+      break;
+    }
+  }
+
+  // فقط بیت‌های معنادار را بررسی کن
+  for (int i = 0; i <= highest_bit; i++) {
+    int bit = (pattern >> i) & 1;
+    if (bit == 0)
+      reader();
+    else
+      writer();
+  }
+
+  return 0;
+}
+
+	
