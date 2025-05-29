@@ -1,8 +1,3 @@
-
-#define MAX_SYSCALLS 100
-#define MAX_USERS 32
-#define PASSWORD_LEN 16
-
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -54,19 +49,6 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-
-  int uid;
-  int logged_in;
-  int syscalls[MAX_SYSCALLS];
-  int syscall_count;
-
-  int class;                   // 1 for Real-Time, 2 for Normal
-  int level;                   // For Class 2: 1 for Interactive, 2 for Batch
-  int deadline;                // For Class 1: Deadline for EDF scheduling
-  int wait_ticks;              // For aging: Tracks time spent in ready queue
-  int quantum_ticks;           // Tracks ticks used in current quantum (for Level 1)
-  int run_ticks;
-  int queue_entry_time;
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -74,29 +56,3 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
-
-extern int logged_in_uids[MAX_USERS];
-
-
-struct user_cred {
-  int uid;
-  char password[PASSWORD_LEN];
-};
-extern struct user_cred user_credentials[MAX_USERS];
-
-
-
-struct user_syscall_logs {
-  int uid;
-  int syscalls[MAX_SYSCALLS];
-  int syscall_count;
-};
-
-extern int current_logged_in_uid;
-extern struct user_syscall_logs user_syscall_logs[MAX_USERS];
-
-
-void print_all_user_logs(void);
-int make_user_syscall(int uid, char *password);
-int diff_syscall(const char* file1, const char* file2);
-

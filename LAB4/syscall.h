@@ -20,13 +20,3 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_next_palindrome 22
-#define SYS_make_user_syscall 23  
-#define SYS_login_syscall     24  
-#define SYS_logout_syscall    25  
-#define SYS_get_logs_syscall  26  
-#define SYS_set_sleep 27
-#define SYS_cmostime 28
-#define SYS_diff_syscall 29
-#define SYS_print_info 30
-#define SYS_change_queue 31

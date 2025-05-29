@@ -6,9 +6,6 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
-#include "fcntl.h"
-#include "string.h"
-void print_info(void);
 
 int
 sys_fork(void)
@@ -80,26 +77,6 @@ sys_sleep(void)
   return 0;
 }
 
-
-// int
-// sys_set_sleep(void){
-//   int ticks;
-//   if (argint(0,&ticks)<0)
-//     return -1;
-//   if (ticks<0){
-//     return -1;
-//   }
-//   int start_ticks = ticks0;
-  
-//   while (ticks0 - start_ticks<ticks){
-//     if (proc -> killed){
-//       return -1;
-//     }
-//     yield();
-//   }
-//   return 0;
-// }
-
 // return how many clock tick interrupts have occurred
 // since start.
 int
@@ -112,35 +89,3 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-
-
-int sys_diff_syscall(void)
-{
-
-  char *text_file1, *text_file2;
-
-  if (argstr(0, &text_file1) < 0 || argstr(1, &text_file2) < 0)
-
-    return -1;
-    
-  return diff_syscall(text_file1, text_file2);
-
-}
-
-
-int
-sys_change_queue(void)
-{
-  int pid, q;
-  if(argint(0, &pid) < 0 || argint(1, &q) < 0)
-    return -1;
-  return change_queue(pid, q);
-}
-
-int
-sys_print_info(void)
-{
-  print_info();
-  return 0;
-}
-
