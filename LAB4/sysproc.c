@@ -6,6 +6,8 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "sleeplock.h"
+
 
 int
 sys_fork(void)
@@ -132,4 +134,62 @@ int sys_get_rw_pattern(void) {
   return 0;
 }
 
-	
+
+struct {
+  struct semaphore sems[6]; // 0: barber, 1: chair, 2: mutex, 3: customers, 4: waiting, 5: service
+} barber_state;
+
+int
+sys_init_barber(void)
+{
+  sem_init(&barber_state.sems[0], 0); // Barber
+  sem_init(&barber_state.sems[1], 1); // Chair (1 available)
+  sem_init(&barber_state.sems[2], 1); // Mutex
+  sem_init(&barber_state.sems[3], 0); // Customers
+  sem_init(&barber_state.sems[4], 5); // Waiting chairs (5 available)
+  sem_init(&barber_state.sems[5], 0); // Service
+  return 0;
+}
+
+int
+sys_barber_sleep(void)
+{
+  sem_wait(&barber_state.sems[2]); // Acquire mutex
+  if (barber_state.sems[3].value == 0) { // No customers
+    sem_signal(&barber_state.sems[2]); // Release mutex
+    sem_wait(&barber_state.sems[0]); // Barber sleeps
+  } else {
+    sem_signal(&barber_state.sems[2]); // Release mutex
+  }
+  return 0;
+}
+
+int
+sys_customer_arr(void)
+{
+  sem_wait(&barber_state.sems[2]); // Acquire mutex
+  if (barber_state.sems[4].value > 0) { // Check for available chairs
+    sem_wait(&barber_state.sems[4]); // Occupy a chair
+    sem_signal(&barber_state.sems[3]); // Increment customers
+    sem_signal(&barber_state.sems[2]); // Release mutex
+    sem_signal(&barber_state.sems[0]); // Wake barber if sleeping
+    sem_wait(&barber_state.sems[1]); // Wait for chair
+    sem_wait(&barber_state.sems[5]); // Wait for service
+  } else {
+    sem_signal(&barber_state.sems[2]); // Release mutex, no chairs, leave
+    return -1;
+  }
+  return 0;
+}
+
+int
+sys_cut_hair(void)
+{
+  sem_wait(&barber_state.sems[2]); // Acquire mutex
+  sem_wait(&barber_state.sems[3]); // Wait for a customer
+  sem_signal(&barber_state.sems[1]); // Free the chair
+  sem_signal(&barber_state.sems[5]); // Signal service
+  sem_signal(&barber_state.sems[4]); // Free a waiting chair
+  sem_signal(&barber_state.sems[2]); // Release mutex
+  return 0;
+}

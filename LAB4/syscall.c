@@ -105,6 +105,10 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_init_rw_lock(void);
 extern int sys_get_rw_pattern(void);
+extern int sys_init_barber(void);
+extern int sys_barber_sleep(void);
+extern int sys_customer_arr(void);
+extern int sys_cut_hair(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -130,6 +134,10 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_init_rw_lock] sys_init_rw_lock,
 [SYS_get_rw_pattern] sys_get_rw_pattern,
+[SYS_init_barber]   sys_init_barber,
+[SYS_barber_sleep]    sys_barber_sleep,
+[SYS_customer_arr]   sys_customer_arr,
+[SYS_cut_hair]      sys_cut_hair,
 };
 
 void

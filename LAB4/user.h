@@ -25,6 +25,10 @@ int sleep(int);
 int uptime(void);
 int init_rw_lock(void);
 int get_rw_pattern(int pattern);
+int init_barber(void);
+int barber_sleep(void);
+int customer_arr(void);
+int cut_hair(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

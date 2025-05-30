@@ -22,3 +22,7 @@
 #define SYS_close  21
 #define SYS_init_rw_lock 22
 #define SYS_get_rw_pattern 23
+#define SYS_init_barber   24
+#define SYS_barber_sleep  25
+#define SYS_customer_arr    26
+#define SYS_cut_hair      27

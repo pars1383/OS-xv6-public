@@ -1,3 +1,4 @@
+
 struct buf;
 struct context;
 struct file;
@@ -155,6 +156,13 @@ int             argstr(int, char**);
 int             fetchint(uint, int*);
 int             fetchstr(uint, char**);
 void            syscall(void);
+
+
+//sysproc.c
+int sys_init_barber(void);
+int sys_barber_sleep(void);
+int sys_customer_arr(void);
+int sys_cut_hair(void);
 
 // timer.c
 void            timerinit(void);
