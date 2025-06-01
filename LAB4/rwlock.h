@@ -9,11 +9,11 @@ struct semaphore {
 };
 
 struct rw_lock {
-  struct semaphore read_sem;   // قفل برای کنترل ورود خواننده‌ها
-  struct semaphore write_sem;  // قفل برای نویسنده‌ها
-  int read_count;              // تعداد خواننده‌های فعال
-  int write_waiting;          // تعداد نویسنده‌های منتظر
-  struct spinlock lock;        // قفل برای محافظت از این ساختار
+  struct semaphore read_sem;   
+  struct semaphore write_sem;  
+  int read_count;              
+  int write_waiting;        
+  struct spinlock lock;        
 };
 
 void sem_init(struct semaphore *s, int value);

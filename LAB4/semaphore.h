@@ -4,8 +4,8 @@
 #include "spinlock.h"
 
 struct semaphore {
-  int value;            // Current value of the semaphore
-  struct spinlock lock; // Spinlock to protect semaphore
+  int value;      
+  struct spinlock lock; 
 };
 
 void sem_init(struct semaphore *sem, int value);

@@ -40,7 +40,7 @@ main(int argc, char *argv[])
       customer(i + 1);
       exit();
     }
-    sleep(10); // Space out customer arrivals
+    sleep(10);
   }
   for (i = 0; i < 10; i++) {
     wait();

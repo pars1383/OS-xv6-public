@@ -79,8 +79,6 @@ sys_sleep(void)
   return 0;
 }
 
-// return how many clock tick interrupts have occurred
-// since start.
 int
 sys_uptime(void)
 {
@@ -113,7 +111,6 @@ int sys_get_rw_pattern(void) {
   if (argint(0, &pattern) < 0)
     return -1;
 
-  // پیدا کردن تعداد بیت‌های معنادار
   int highest_bit = -1;
   for (int i = 31; i >= 0; i--) {
     if ((pattern >> i) & 1) {
@@ -122,7 +119,6 @@ int sys_get_rw_pattern(void) {
     }
   }
 
-  // فقط بیت‌های معنادار را بررسی کن
   for (int i = 0; i <= highest_bit; i++) {
     int bit = (pattern >> i) & 1;
     if (bit == 0)
@@ -143,7 +139,7 @@ int
 sys_init_barber(void)
 {
   sem_init(&barber_state.sems[0], 0); // Barber
-  sem_init(&barber_state.sems[1], 1); // Chair (1 available)
+  sem_init(&barber_state.sems[1], 1); // Chair 
   sem_init(&barber_state.sems[2], 1); // Mutex
   sem_init(&barber_state.sems[3], 0); // Customers
   sem_init(&barber_state.sems[4], 5); // Waiting chairs (5 available)
@@ -154,12 +150,12 @@ sys_init_barber(void)
 int
 sys_barber_sleep(void)
 {
-  sem_wait(&barber_state.sems[2]); // Acquire mutex
+  sem_wait(&barber_state.sems[2]); 
   if (barber_state.sems[3].value == 0) { // No customers
-    sem_signal(&barber_state.sems[2]); // Release mutex
+    sem_signal(&barber_state.sems[2]); 
     sem_wait(&barber_state.sems[0]); // Barber sleeps
   } else {
-    sem_signal(&barber_state.sems[2]); // Release mutex
+    sem_signal(&barber_state.sems[2]); 
   }
   return 0;
 }
@@ -176,7 +172,7 @@ sys_customer_arr(void)
     sem_wait(&barber_state.sems[1]); // Wait for chair
     sem_wait(&barber_state.sems[5]); // Wait for service
   } else {
-    sem_signal(&barber_state.sems[2]); // Release mutex, no chairs, leave
+    sem_signal(&barber_state.sems[2]); // Release mutex
     return -1;
   }
   return 0;
@@ -185,11 +181,11 @@ sys_customer_arr(void)
 int
 sys_cut_hair(void)
 {
-  sem_wait(&barber_state.sems[2]); // Acquire mutex
+  sem_wait(&barber_state.sems[2]); 
   sem_wait(&barber_state.sems[3]); // Wait for a customer
   sem_signal(&barber_state.sems[1]); // Free the chair
   sem_signal(&barber_state.sems[5]); // Signal service
   sem_signal(&barber_state.sems[4]); // Free a waiting chair
-  sem_signal(&barber_state.sems[2]); // Release mutex
+  sem_signal(&barber_state.sems[2]); 
   return 0;
 }

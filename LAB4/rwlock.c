@@ -33,11 +33,11 @@ struct rw_lock my_rw_lock;
 int shared_value = 0;
 
 void reader(void) {
-    sem_wait(&my_rw_lock.read_sem);         // جلوگیری از ورود همزمان با writer
-    acquire(&my_rw_lock.lock);              // محافظت از read_count
+    sem_wait(&my_rw_lock.read_sem);       
+    acquire(&my_rw_lock.lock);             
     my_rw_lock.read_count++;
     if (my_rw_lock.read_count == 1)
-      sem_wait(&my_rw_lock.write_sem);      // اولین خواننده جلوی نویسنده‌ها رو می‌گیره
+      sem_wait(&my_rw_lock.write_sem);     
     release(&my_rw_lock.lock);
     sem_signal(&my_rw_lock.read_sem);
   
@@ -47,19 +47,19 @@ void reader(void) {
     acquire(&my_rw_lock.lock);
     my_rw_lock.read_count--;
     if (my_rw_lock.read_count == 0)
-      sem_signal(&my_rw_lock.write_sem);    // آخرین خواننده اجازه نوشتن می‌ده
+      sem_signal(&my_rw_lock.write_sem);   
     release(&my_rw_lock.lock);
 }
   
   
 void writer(void) {
     acquire(&my_rw_lock.lock);
-    my_rw_lock.write_waiting++;             // اعلام حضور نویسنده
+    my_rw_lock.write_waiting++;           
     release(&my_rw_lock.lock);
   
-    sem_wait(&my_rw_lock.write_sem);        // گرفتن قفل نوشتن
+    sem_wait(&my_rw_lock.write_sem);       
   
-    // --- عملیات نوشتن ---
+    
     shared_value++;
     cprintf("Writer: incremented shared_value to %d\n", shared_value);
   
@@ -67,5 +67,5 @@ void writer(void) {
     my_rw_lock.write_waiting--;
     release(&my_rw_lock.lock);
   
-    sem_signal(&my_rw_lock.write_sem);      // آزادسازی قفل نوشتن
+    sem_signal(&my_rw_lock.write_sem);     
 }
