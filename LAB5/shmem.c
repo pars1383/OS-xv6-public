@@ -11,7 +11,7 @@ struct shmem_table shmem_table;
 void
 shmem_init(void)
 {
-  cprintf("Initializing shared memory table\n");
+  cprintf("shmem_init: initializing shared memory table\n");
   for (int i = 0; i < MAX_SHMEM; i++) {
     shmem_table.entries[i].id = -1;
     shmem_table.entries[i].addr = 0;
@@ -55,33 +55,34 @@ open_shared_mem(int id)
     curproc->sz = allocuvm(curproc->pgdir, oldsz, oldsz + PGSIZE);
     if (curproc->sz == 0) {
       entry->ref_count--;
-      cprintf("allocuvm failed for id %d\n", id);
+      cprintf("open_shared_mem: allocuvm failed for id %d\n", id);
       return 0;
     }
     if (copyout(curproc->pgdir, oldsz, entry->addr, PGSIZE) < 0) {
       entry->ref_count--;
       curproc->sz = deallocuvm(curproc->pgdir, curproc->sz, oldsz);
-      cprintf("copyout failed for id %d\n", id);
+      cprintf("open_shared_mem: copyout failed for id %d\n", id);
       return 0;
     }
     entry->user_addr = (char*)oldsz;
+    cprintf("open_shared_mem: id=%d, va=0x%x, ref_count=%d, pid=%d\n", id, oldsz, entry->ref_count, curproc->pid);
     return (char*)oldsz;
   } else {
     entry = find_free_entry();
     if (!entry) {
-      cprintf("No free shared memory entries\n");
+      cprintf("open_shared_mem: no free entries\n");
       return 0;
     }
     char *mem = kalloc();
     if (!mem) {
-      cprintf("kalloc failed\n");
+      cprintf("open_shared_mem: kalloc failed\n");
       return 0;
     }
     memset(mem, 0, PGSIZE);
     curproc->sz = allocuvm(curproc->pgdir, oldsz, oldsz + PGSIZE);
     if (curproc->sz == 0) {
       kfree(mem);
-      cprintf("allocuvm failed for id %d\n", id);
+      cprintf("open_shared_mem: allocuvm failed for id %d\n", id);
       return 0;
     }
     entry->id = id;
@@ -89,6 +90,7 @@ open_shared_mem(int id)
     entry->user_addr = (char*)oldsz;
     entry->ref_count = 1;
     entry->in_use = 1;
+    cprintf("open_shared_mem: id=%d, va=0x%x, ref_count=%d, pid=%d\n", id, oldsz, entry->ref_count, curproc->pid);
     return (char*)oldsz;
   }
 }
@@ -98,19 +100,39 @@ sync_shared_mem(int id)
 {
   struct shmem_entry *entry = find_entry(id);
   if (!entry) {
+    cprintf("sync_shared_mem: no entry for id %d\n", id);
     return -1;
   }
   char *temp = kalloc();
   if (!temp) {
-    cprintf("kalloc failed in sync_shared_mem\n");
+    cprintf("sync_shared_mem: kalloc failed\n");
     return -1;
   }
   char *kva = uva2ka(myproc()->pgdir, (char*)PGROUNDDOWN((uint)entry->user_addr));
   if (kva) {
     memmove(temp, kva, PGSIZE);
     memmove(entry->addr, temp, PGSIZE);
+    cprintf("sync_shared_mem: updated kernel page for id %d, pid=%d\n", id, myproc()->pid);
+  } else {
+    cprintf("sync_shared_mem: uva2ka failed for va=0x%x, pid=%d\n", entry->user_addr, myproc()->pid);
   }
   kfree(temp);
+  return 0;
+}
+
+int
+update_shared_mem(int id)
+{
+  struct shmem_entry *entry = find_entry(id);
+  if (!entry) {
+    cprintf("update_shared_mem: no entry for id %d\n", id);
+    return -1;
+  }
+  if (copyout(myproc()->pgdir, (uint)entry->user_addr, entry->addr, PGSIZE) < 0) {
+    cprintf("update_shared_mem: copyout failed for va=0x%x, pid=%d\n", entry->user_addr, myproc()->pid);
+    return -1;
+  }
+  cprintf("update_shared_mem: updated user page for id %d, pid=%d\n", id, myproc()->pid);
   return 0;
 }
 
@@ -119,8 +141,10 @@ get_shmem_kernel_addr(int id)
 {
   struct shmem_entry *entry = find_entry(id);
   if (!entry) {
+    cprintf("get_shmem_kernel_addr: no entry for id %d\n", id);
     return 0;
   }
+  cprintf("get_shmem_kernel_addr: id=%d, addr=0x%x, pid=%d\n", id, entry->addr, myproc()->pid);
   return entry->addr;
 }
 
@@ -129,9 +153,11 @@ close_shared_mem(int id)
 {
   struct shmem_entry *entry = find_entry(id);
   if (!entry) {
+    cprintf("close_shared_mem: no entry for id %d\n", id);
     return -1;
   }
   entry->ref_count--;
+  cprintf("close_shared_mem: id=%d, ref_count=%d, pid=%d\n", id, entry->ref_count, myproc()->pid);
   if (entry->ref_count == 0) {
     kfree(entry->addr);
     entry->id = -1;

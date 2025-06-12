@@ -27,3 +27,4 @@
 #define SYS_monitor_close_shared_mem   26
 #define SYS_monitor_read_shared_mem    27
 #define SYS_sync_shared_mem 28
+#define SYS_update_shared_mem 29

@@ -91,13 +91,16 @@ sys_uptime(void)
   return xticks;
 }
 
+
 int
 sys_open_shared_mem(void)
 {
   int id;
   if (argint(0, &id) < 0)
-    return (int)0;
+    return -1;
   char *addr = open_shared_mem(id);
+  if (!addr)
+    return -1;
   return (int)addr;
 }
 
@@ -117,4 +120,13 @@ sys_sync_shared_mem(void)
   if (argint(0, &id) < 0)
     return -1;
   return sync_shared_mem(id);
+}
+
+int
+sys_update_shared_mem(void)
+{
+  int id;
+  if (argint(0, &id) < 0)
+    return -1;
+  return update_shared_mem(id);
 }

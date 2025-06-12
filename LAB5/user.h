@@ -44,3 +44,5 @@ int monitor_init(int shared_mem_id, int* initial_value, int size_value);
 int monitor_increase_all_elems(int shared_mem_id);
 int monitor_close_shared_mem(int shared_mem_id);
 int monitor_read_shared_mem(int shared_memory_id, int* data);
+int sync_shared_mem(int);
+int update_shared_mem(int);

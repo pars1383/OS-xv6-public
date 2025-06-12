@@ -18,7 +18,8 @@ struct shmem_table {
 void shmem_init(void);
 char* open_shared_mem(int id);
 int sync_shared_mem(int id);
+int update_shared_mem(int id);
 int close_shared_mem(int id);
 char* get_shmem_kernel_addr(int id);
 
-#endif  
+#endif

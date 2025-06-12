@@ -111,6 +111,7 @@ extern int sys_monitor_increase_all_elems(void);
 extern int sys_monitor_close_shared_mem(void);
 extern int sys_monitor_read_shared_mem(void);
 extern int sys_sync_shared_mem(void);
+extern int sys_update_shared_mem(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -142,6 +143,7 @@ static int (*syscalls[])(void) = {
 [SYS_monitor_close_shared_mem]   sys_monitor_close_shared_mem,
 [SYS_monitor_read_shared_mem]    sys_monitor_read_shared_mem,
 [SYS_sync_shared_mem] sys_sync_shared_mem,
+[SYS_update_shared_mem] sys_update_shared_mem,
 };
 
 void
