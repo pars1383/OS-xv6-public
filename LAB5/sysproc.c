@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "shmem.h"
 
 int
 sys_fork(void)
@@ -88,4 +89,32 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_open_shared_mem(void)
+{
+  int id;
+  if (argint(0, &id) < 0)
+    return (int)0;
+  char *addr = open_shared_mem(id);
+  return (int)addr;
+}
+
+int
+sys_close_shared_mem(void)
+{
+  int id;
+  if (argint(0, &id) < 0)
+    return -1;
+  return close_shared_mem(id);
+}
+
+int
+sys_sync_shared_mem(void)
+{
+  int id;
+  if (argint(0, &id) < 0)
+    return -1;
+  return sync_shared_mem(id);
 }

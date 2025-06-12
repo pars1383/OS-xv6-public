@@ -37,3 +37,10 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+int open_shared_mem(int id);
+int close_shared_mem(int id);
+int monitor_init(int shared_mem_id, int* initial_value, int size_value);
+int monitor_increase_all_elems(int shared_mem_id);
+int monitor_close_shared_mem(int shared_mem_id);
+int monitor_read_shared_mem(int shared_memory_id, int* data);
